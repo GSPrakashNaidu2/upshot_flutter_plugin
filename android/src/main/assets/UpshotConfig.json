@@ -1,0 +1,16 @@
+{
+    "appId": "59977058-0b1b-4af5-b5cb-441680b74c26",
+    "ownerId": "f3bf1d6f-5771-41f7-a6ff-640d3af4805e",
+    "debugLogs": true,
+    "location": false,
+    "dispatchInterval": 30,
+    "exceptionalHandler": true,
+    "cellularData": true,
+    "bkStorageAppMemory": false,
+    "dataRegion": "usa",
+    "endPoints": {
+        "api": "https://api.goupshot.com/webservices/",
+        "events": "https://events.goupshot.com:3000/"
+        
+    }
+}
