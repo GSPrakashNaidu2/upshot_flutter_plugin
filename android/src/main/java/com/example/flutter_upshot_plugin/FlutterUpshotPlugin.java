@@ -12,6 +12,8 @@ import com.brandkinesis.BKProperties;
 import com.brandkinesis.BKUserInfo;
 import com.brandkinesis.BrandKinesis;
 import com.brandkinesis.activitymanager.BKActivityTypes;
+import com.brandkinesis.callback.BKActivityCallback;
+import com.brandkinesis.callback.BKBadgeAccessListener;
 import com.brandkinesis.callback.BrandKinesisCallback;
 import com.brandkinesis.utils.BKAppStatusUtil;
 
@@ -36,8 +38,6 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
   private MethodChannel channel;
   private Context context;
   HashMap<String, List<HashMap<String, Object>>> badgesResult;
-  BKActivityTypes activityTypeResult;
-  Map<String, Object> actionDataResult;
   HashMap<String, Object> showActivityData;
 
 
@@ -47,6 +47,24 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
     channel.setMethodCallHandler(this);
     this.context = flutterPluginBinding.getApplicationContext();
   }
+
+  BKAppStatusUtil.BKAppStatusListener listener = new BKAppStatusUtil.BKAppStatusListener() {
+    @Override
+    public void onAppComesForeground(Activity activity) {
+      BrandKinesis.initialiseBrandKinesis(context, null);
+      Log.e("App status==", "Foreground:: " );
+    }
+
+    @Override
+    public void onAppGoesBackground() {
+      Log.e("App status==", "Background");
+    }
+
+    @Override
+    public void onAppRemovedFromRecentsList() {
+      Log.e("App status==", "removed from recent list");
+    }
+  };
 
   private void setUpshotGlobalCallback() {
     BrandKinesis bkInstance = BrandKinesis.getBKInstance();
@@ -137,24 +155,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
     else if(call.method.equals("initialiseBrandKinesis")){
       setUpshotGlobalCallback();
       BrandKinesis.initialiseBrandKinesis(context, null);
-      BrandKinesis brandKinesis =  BrandKinesis.getBKInstance();
 
-      BKAppStatusUtil.BKAppStatusListener listener = new BKAppStatusUtil.BKAppStatusListener() {
-        @Override
-        public void onAppComesForeground(Activity activity) {
-          Log.e("App status==", "Foreground:: " + brandKinesis);
-        }
-
-        @Override
-        public void onAppGoesBackground() {
-          Log.e("App status==", "Background");
-        }
-
-        @Override
-        public void onAppRemovedFromRecentsList() {
-          Log.e("App status==", "removed from recent list");
-        }
-      };
       BKAppStatusUtil.getInstance().register(context, listener);
 
     }
@@ -166,37 +167,24 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       HashMap<String , Object> data = call.argument("data");
       String appId = call.argument("appId");
       String ownerId = call.argument("ownerId");
-      assert data != null;
+      boolean fetchLocation = call.argument("fetchLocation");
+      boolean enableDebugLogs = call.argument("enableDebugLogs");
+      boolean useExternalStorage = call.argument("useExternalStorage");
       assert appId != null;
       assert ownerId != null;
         Bundle bundle = new Bundle();
-        data.put(BKProperties.BK_APPLICATION_ID, appId);
-        data.put(BKProperties.BK_APPLICATION_OWNER_ID, ownerId);
-        data.put(BKProperties.BK_FETCH_LOCATION, true);
-        data.put(BKProperties.BK_ENABLE_DEBUG_LOGS,  false);
-        data.put(BKProperties.BK_USE_EXTERNAL_STORAGE, true);
+        bundle.putString(BKProperties.BK_APPLICATION_ID, appId);
+      bundle.putString(BKProperties.BK_APPLICATION_OWNER_ID, ownerId);
+      bundle.putBoolean(BKProperties.BK_FETCH_LOCATION, fetchLocation);
+      bundle.putBoolean(BKProperties.BK_ENABLE_DEBUG_LOGS,  enableDebugLogs);
+      bundle.putBoolean(BKProperties.BK_USE_EXTERNAL_STORAGE, useExternalStorage);
         // intialize BrandKinesis (BKAuthCallback will provide the status of initialisation of Upshot)
         BrandKinesis.initialiseBrandKinesis(context, bundle, null);
-      BrandKinesis brandKinesis =  BrandKinesis.getBKInstance();
 
-      BKAppStatusUtil.BKAppStatusListener listener = new BKAppStatusUtil.BKAppStatusListener() {
-        @Override
-        public void onAppComesForeground(Activity activity) {
-          Log.e("App status==", "Foreground:: " + brandKinesis);
-        }
-
-        @Override
-        public void onAppGoesBackground() {
-          Log.e("App status==", "Background");
-        }
-
-        @Override
-        public void onAppRemovedFromRecentsList() {
-          Log.e("App status==", "removed from recent list");
-        }
-      };
       BKAppStatusUtil.getInstance().register(context, listener);
     }
+
+
     /**
      *............................................... createEvent ..................................
      */
@@ -206,15 +194,11 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       HashMap<String , Object> data = call.argument("data");
       assert eventName != null;
       assert data != null;
-      Log.e("Event Name is:","Event Name is:" + eventName);
-      Log.e("Data is:","Data is:" + data.values());
       String eventID =  bkInstance.createEvent(eventName, data, false);
       if (eventID.isEmpty()){
         result.error("401","Not created",0);
-        Log.e("Creating Event","Event not created");
       }else{
         result.success(eventID);
-        Log.e("Creating Event","Event created");
       }
     }
     /**
@@ -226,17 +210,12 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       String longitude = call.argument("longitude");
       assert latitude != null;
       assert longitude != null;
-      Log.e("Latitude",latitude);
-      Log.e("Longitude",longitude);
-
        String eventId =  bkInstance.createLocationEvent(Double.parseDouble(latitude), Double.parseDouble(longitude));
 
       if (!eventId.isEmpty()) {
-        result.success("sending location to upshot");
-        Log.e("Location Event","Location event created" + eventId);
+        result.success(eventId);
       } else {
         result.error("401","Location event not created",0);
-        Log.e("Location Event","Location event not created");
       }
     }
     /**
@@ -245,13 +224,17 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
     else if(call.method.equals("setValueAndClose")){
       BrandKinesis bkInstance = BrandKinesis.getBKInstance();
       String eventName = call.argument("eventName");
+      boolean isTimed = call.argument("isTimed");
       HashMap<String , Object> data = call.argument("data");
       assert eventName != null;
       assert data != null;
-      String eventIdValue = bkInstance.createEvent(eventName, data, true);
+      String eventIdValue = bkInstance.createEvent(eventName, data, isTimed);
       BrandKinesis.getBKInstance().closeEvent(eventIdValue, data);
-      Log.e("Set & Close","Set And Closed the Event");
-      result.success("Set And Closed the Event");
+      if (eventIdValue.isEmpty()){
+        result.error("401","Not able to close",0);
+      }else{
+        result.success("Set And Closed the Event");
+      }
     }
     /**
      *....................................... closeEventForId ......................................
@@ -260,7 +243,6 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       String eventId = call.argument("eventId");
       assert eventId != null;
       BrandKinesis.getBKInstance().closeEvent(eventId);
-      Log.e("Close","Closed the Event");
       result.success("Closed the Event");
     }
     /**
@@ -293,60 +275,43 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
      */
     else if(call.method.equals("createPageViewEvent")) {
       HashMap<String, Object> data = call.argument("data");
+      boolean isTimed = call.argument("isTimed");
       String pageName = call.argument("pageName");
       assert  pageName != null;
       assert data != null;
       data.put(BrandKinesis.BK_CURRENT_PAGE, pageName);
       BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-      String eventID = bkInstance.createEvent(BKProperties.BKPageViewEvent.NATIVE, data, true);
+      String eventID = bkInstance.createEvent(BKProperties.BKPageViewEvent.NATIVE, data, isTimed);
       if (!eventID.isEmpty()) {
-        result.success("createPageViewEvent created");
-        Log.e("createPageViewEvent","createPageViewEvent created" + eventID);
+        result.success(eventID);
       } else {
         result.error("401","createPageViewEvent not created",0);
-        Log.e("createPageViewEvent","createPageViewEvent not created");
       }
-      result.success(eventID);
     }
     /**
      *...................................... createPageViewEvent .......................................
      */
     else if(call.method.equals("createAttributionEvent")) {
-//      String appToken = "{ADJUST_APP_TOKEN}";
-//      String environment = AdjustConfig.ENVIRONMENT_PRODUCTION;
-//      AdjustConfig config = new AdjustConfig(this, appToken, environment);
-//      config.setOnAttributionChangedListener(new OnAttributionChangedListener() {
-//        @Override
-//        public void onAttributionChanged(AdjustAttribution attribution) {
-//        }
-//      });
-//      Adjust.onCreate(config);
-//
-//      new OnAttributionChangedListener() {
-//        @Override
-//        public void onAttributionChanged(AdjustAttribution attribution) {
-//          String bkAttributionSource = "adjust";
-//          String bkUtmSource = attribution.network;
-//          String bkUtmMedium = attribution.trackerName;
-//          String bkUtmCampaign = attribution.campaign;
-//          HashMap<Object, Object> data = new HashMap<>();
-//          data.put(BKProperties.BKAttributionEventType.BK_ATTRIBUTION_SOURCE, bkAttributionSource);
-//          data.put(BKProperties.BKAttributionEventType.BK_UTM_SOURCE, bkUtmSource);
-//          data.put(BKProperties.BKAttributionEventType.BK_UTM_MEDIUM, bkUtmMedium);
-//          data.put(BKProperties.BKAttributionEventType.BK_UTM_CAMPAIGN, bkUtmCampaign);
-//          BrandKinesis.getBKInstance().createAttributionEvent(data);
-//        }
-//      };
+          String bkAttributionSource = call.argument("attributionSource");
+          String bkUtmSource = call.argument("utmSource");
+          String bkUtmMedium = call.argument("utmMedium");
+          String bkUtmCampaign = call.argument("utmCampaign");
+          HashMap<String, String> data = new HashMap<>();
+          data.put(BKProperties.BKAttributionEventType.BK_ATTRIBUTION_SOURCE, bkAttributionSource);
+          data.put(BKProperties.BKAttributionEventType.BK_UTM_SOURCE, bkUtmSource);
+          data.put(BKProperties.BKAttributionEventType.BK_UTM_MEDIUM, bkUtmMedium);
+          data.put(BKProperties.BKAttributionEventType.BK_UTM_CAMPAIGN, bkUtmCampaign);
+          BrandKinesis.getBKInstance().createAttributionEvent(data);
     }
     else if(call.method.equals("sendUserDetails")){
       HashMap<String , Object> data = call.argument("data");
       HashMap<String , Object> others = call.argument("others");
       Bundle userInfo = new Bundle();
       assert data != null;
-      Log.e(" Data :","Data is:" + (String) data.get("first_name"));
+
       userInfo.putString(BKUserInfo.BKUserData.FIRST_NAME, (String) data.get("first_name"));
       userInfo.putInt(BKUserInfo.BKUserData.AGE, (int) data.get("age"));
-      userInfo.putInt(BKUserInfo.BKUserData.GENDER, BKUserInfo.BKGender.MALE);
+      userInfo.putInt(BKUserInfo.BKUserData.GENDER, (int) data.get("gender"));
       userInfo.putString(BKUserInfo.BKUserData.EMAIL,(String) data.get("mail"));
       userInfo.putInt(BKUserInfo.BKUserDOBdata.DAY, (int) data.get("day"));
       userInfo.putInt(BKUserInfo.BKUserDOBdata.MONTH,(int) data.get("month"));
@@ -377,10 +342,8 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
         assert data != null;
         String eventId = bkInstance.createEvent(eventName, data, isTimed);
         if (eventId != null) {
-          Log.e("200", eventId);
           result.success(eventId);
         } else {
-          Log.e("401", "Not able to create an event");
           result.error("401","Custom Event Not Created",0);
         }
       }catch (Exception e) {
@@ -392,8 +355,12 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
      */
     else if(call.method.equals("getBadges")){
       BrandKinesis bkInstance = BrandKinesis.getBKInstance();
-      bkInstance.getBadges(null);
-      result.success(badgesResult);
+      bkInstance.getBadges(new BKBadgeAccessListener() {
+        @Override
+        public void onBadgesAvailable(HashMap<String, List<HashMap<String, Object>>> hashMap) {
+          result.success(hashMap);
+        }
+      });
     }
     /**
      *...................................... showActivity .......................................
@@ -402,9 +369,34 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       BrandKinesis bkInstance = BrandKinesis.getBKInstance();
       String tag = call.argument("tag");
       Log.e("Argument","Tag is" + tag);
-      bkInstance.getActivity(context, BKActivityTypes.ACTIVITY_ANY, tag);
-      Log.e("Activity Data","Activity Data" + showActivityData.values().toString());
-      result.success(showActivityData);
+      bkInstance.getActivity(context, BKActivityTypes.ACTIVITY_ANY, tag, new BKActivityCallback() {
+        @Override
+        public void onActivityError(int i) {
+
+        }
+
+        @Override
+        public void onActivityCreated(BKActivityTypes bkActivityTypes) {
+
+        }
+
+        @Override
+        public void onActivityDestroyed(BKActivityTypes bkActivityTypes) {
+
+        }
+
+        @Override
+        public void brandKinesisActivityPerformedActionWithParams(BKActivityTypes bkActivityTypes, Map<String, Object> map) {
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            showActivityData.putIfAbsent("activityType",bkActivityTypes);
+            showActivityData.putIfAbsent("actionData",map);
+          }
+          result.success(showActivityData);
+          Log.e("Activity Data","Activity Data" + showActivityData.values().toString());
+        }
+      });
+
+
     }
     else {
       result.notImplemented();

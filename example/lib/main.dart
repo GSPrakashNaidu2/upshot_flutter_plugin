@@ -53,12 +53,16 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> createEvent() async {
-    HashMap<String, Object>? data = HashMap();
-    data['city'] = 'Bengaluru';
-    data['timesVisited'] = 20;
+  Future<void> initializeBrandKinesisWithOptions(String appId, String ownerId,
+      bool fetchLocation, bool useExternalStorage, bool enableDebugLogs) async {
+    await FlutterUpshotPlugin.initialiseBrandKinesisWithOptions(
+        appId, ownerId, fetchLocation, useExternalStorage, enableDebugLogs);
+  }
+
+  Future<void> createEvent(
+      String eventName, HashMap<String, Object> data) async {
     try {
-      String? eventID = await FlutterUpshotPlugin.createEvent("test", data);
+      String? eventID = await FlutterUpshotPlugin.createEvent(eventName, data);
       eventId = eventID;
       log('$eventId');
     } catch (e) {
@@ -66,9 +70,9 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> createLocationEvent() async {
+  Future<void> createLocationEvent(String lat, String long) async {
     try {
-      await FlutterUpshotPlugin.createLocationEvent("17.3850", "78.4867");
+      await FlutterUpshotPlugin.createLocationEvent(lat, long);
     } catch (e) {
       log('$e');
     }
@@ -80,14 +84,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   static Future<void> setValueAndClose(
-      String eventName, HashMap<String, Object>? data) async {
+      String eventName, HashMap<String, Object>? data, bool isTimed) async {
     // data!['city'] = 'Bengaluru';
     // data['timesVisited'] = 20;
-    await FlutterUpshotPlugin.setValueAndClose(eventName, data);
+    await FlutterUpshotPlugin.setValueAndClose(eventName, data, isTimed);
   }
 
   static Future<void> closeEventForId(String eventId) async {
-    log(eventId + "in Main");
     await FlutterUpshotPlugin.closeEventForId(eventId);
   }
 
@@ -99,22 +102,19 @@ class _MyAppState extends State<MyApp> {
     await FlutterUpshotPlugin.removeTutorial();
   }
 
-  static Future<void> createPageViewEvent(String pageName) async {
-    HashMap<String, Object>? data = HashMap();
-    data['city'] = 'Bengaluru';
-    data['timesVisited'] = 20;
+  static Future<void> createPageViewEvent(
+      String pageName, HashMap<String, Object> data, bool isTimed) async {
     try {
-      String? eventID =
-          await FlutterUpshotPlugin.createPageViewEvent(pageName, data);
+      String? eventID = await FlutterUpshotPlugin.createPageViewEvent(
+          pageName, data, isTimed);
+      log(eventID.toString());
     } catch (e) {
       log('Error : $e');
     }
   }
 
   static Future<void> createCustomEvent(
-      String eventName, bool isTimed, HashMap<String, Object>? data) async {
-    data!['city'] = 'Bengaluru';
-    data['timesVisited'] = 20;
+      String eventName, bool isTimed, HashMap<String, Object> data) async {
     try {
       await FlutterUpshotPlugin.createCustomEvent(eventName, isTimed, data);
     } catch (e) {
@@ -127,15 +127,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> showActivity(String tag) async {
-    HashMap<String, dynamic> activityData =
+    HashMap<String, Object> activityData =
         await FlutterUpshotPlugin.showActivity(tag);
-
-    log("Activity Data is" + activityData.values.toString());
+    log(activityData.values.toString());
   }
 
   static Future<void> getBadges() async {
-    HashMap<String, List<HashMap<String, Object>>>? badges =
-        (await FlutterUpshotPlugin.getBadges());
+    HashMap<Object, Object>? badges = await FlutterUpshotPlugin.getBadges();
     // log(badges.values);
     log("Badges in Dart\n\n\n");
     log(badges.toString());
@@ -159,14 +157,17 @@ class _MyAppState extends State<MyApp> {
             const SizedBox(height: 10),
             TextButton(
               onPressed: () async {
-                createEvent();
+                HashMap<String, Object>? data = HashMap();
+                data['city'] = 'Bengaluru';
+                data['timesVisited'] = 20;
+                createEvent("test", data);
               },
               child: const Text("Create Event"),
             ),
             const SizedBox(height: 10),
             TextButton(
               onPressed: () async {
-                createLocationEvent();
+                createLocationEvent("17.2365", "25.3269");
               },
               child: const Text("Create Location Event"),
             ),
@@ -186,7 +187,7 @@ class _MyAppState extends State<MyApp> {
                 HashMap<String, Object> others = HashMap();
                 data.putIfAbsent("first_name", () => "G S Prakash");
                 data.putIfAbsent("age", () => 23);
-                data.putIfAbsent("gender", () => "Male");
+                data.putIfAbsent("gender", () => 1);
                 data.putIfAbsent("mail", () => "gsp8722@gmail.com");
                 data.putIfAbsent("day", () => 23);
                 data.putIfAbsent("month", () => 3);
@@ -222,14 +223,17 @@ class _MyAppState extends State<MyApp> {
                 HashMap<String, Object>? data = HashMap();
                 data['city'] = 'Bengaluru';
                 data['timesVisited'] = 20;
-                setValueAndClose("test", data);
+                setValueAndClose("test", data, true);
               },
               child: const Text("SetValue And Close"),
             ),
             const SizedBox(height: 10),
             TextButton(
               onPressed: () {
-                createPageViewEvent("Login");
+                HashMap<String, Object>? data = HashMap();
+                data['city'] = 'Bengaluru';
+                data['timesVisited'] = 20;
+                createPageViewEvent("Login", data, true);
               },
               child: const Text("Create page view event"),
             ),
@@ -246,7 +250,7 @@ class _MyAppState extends State<MyApp> {
             const SizedBox(height: 10),
             TextButton(
               onPressed: () {
-                dispatchEventWithTime(200);
+                dispatchEventWithTime(20);
               },
               child: const Text("Dispatch event with time"),
             ),

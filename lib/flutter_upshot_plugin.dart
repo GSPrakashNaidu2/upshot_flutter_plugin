@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:developer';
 
 import 'package:flutter/services.dart';
 
@@ -13,15 +14,22 @@ class FlutterUpshotPlugin {
 
   static Future<void> initialiseBrandKinesis() async {
     await _channel.invokeMethod("initialiseBrandKinesis");
-    print('Success : \n\n\n Initialised........');
     return;
   }
 
   static Future<void> initialiseBrandKinesisWithOptions(
-      String appId, String ownerId) async {
-    await _channel
-        .invokeMethod("initialiseBrandKinesisWithOptions", [appId, ownerId]);
-    print('Success : \n\n\n Initialised with options........');
+      String appId,
+      String ownerId,
+      bool fetchLocation,
+      bool useExternalStorage,
+      bool enableDebugLogs) async {
+    Map<String, dynamic> values = <String, dynamic>{};
+    values.putIfAbsent("appId", () => appId);
+    values.putIfAbsent("ownerId", () => ownerId);
+    values.putIfAbsent("fetchLocation", () => fetchLocation);
+    values.putIfAbsent("useExternalStorage", () => useExternalStorage);
+    values.putIfAbsent("enableDebugLogs", () => enableDebugLogs);
+    await _channel.invokeMethod("initialiseBrandKinesisWithOptions", values);
     return;
   }
 
@@ -30,26 +38,26 @@ class FlutterUpshotPlugin {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("data", () => data);
     values.putIfAbsent("eventName", () => eventName);
-    print(values);
+    log(values.toString());
     String? eventId = await _channel.invokeMethod("createEvent", values);
-    print(eventId.toString() + "Event Created");
+    log(eventId.toString() + "\t Event Created");
     return eventId;
   }
 
-  static Future<void> createLocationEvent(
+  static Future<String> createLocationEvent(
       String? latitude, String? longitude) async {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("latitude", () => latitude);
     values.putIfAbsent("longitude", () => longitude);
-    print(latitude.toString() + " : " + longitude.toString());
-    await _channel.invokeMethod("createLocationEvent", values);
-    return;
+    String eventId = await _channel.invokeMethod("createLocationEvent", values);
+    return eventId;
   }
 
   static Future<void> setValueAndClose(
-      String? eventName, HashMap<String, Object>? data) async {
+      String? eventName, HashMap<String, Object>? data, bool isTimed) async {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("data", () => data);
+    values.putIfAbsent("isTimed", () => isTimed);
     values.putIfAbsent("eventName", () => eventName);
     await _channel.invokeMethod("setValueAndClose", values);
     return;
@@ -80,24 +88,34 @@ class FlutterUpshotPlugin {
   }
 
   static Future<String?> createPageViewEvent(
-      String pageName, HashMap<String, Object> data) async {
+      String pageName, HashMap<String, Object> data, bool isTimed) async {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("data", () => data);
+    values.putIfAbsent("isTimed", () => isTimed);
     values.putIfAbsent("pageName", () => pageName);
     String? eventId =
         await _channel.invokeMethod("createPageViewEvent", values);
-    print(eventId.toString() + "Created Page View Event");
+    log(eventId.toString() + "Created Page View Event");
     return eventId;
   }
 
-  static Future<void> createAttributionEvent() async {}
+  static Future<void> createAttributionEvent(String attributionSource,
+      String utmSource, String utmMedium, String utmCampaign) async {
+    Map<String, dynamic> values = <String, dynamic>{};
+    values.putIfAbsent("attributionSource", () => attributionSource);
+    values.putIfAbsent("utmSource", () => utmSource);
+    values.putIfAbsent("utmMedium", () => utmMedium);
+    values.putIfAbsent("utmCampaign", () => utmCampaign);
+    await _channel.invokeMethod("createPageViewEvent", values);
+    return;
+  }
 
   static Future<void> sendUserDetails(
       HashMap<String, Object> data, HashMap<String, Object> others) async {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("data", () => data);
     values.putIfAbsent("others", () => others);
-    print(values);
+    log(values.toString());
     await _channel.invokeMethod("sendUserDetails", values);
   }
 
@@ -108,14 +126,14 @@ class FlutterUpshotPlugin {
     values.putIfAbsent("eventName", () => eventName);
     values.putIfAbsent("isTimed", () => isTimed);
     String? eventId = await _channel.invokeMethod("createCustomEvent", values);
-    print(eventId.toString() + "Created custom Event");
+    log(eventId.toString() + "Created custom Event");
     return eventId;
   }
 
-  static Future<HashMap<String, dynamic>> showActivity(String tag) async {
+  static Future<HashMap<String, Object>> showActivity(String tag) async {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("tag", () => tag);
-    HashMap<String, dynamic> activityData =
+    HashMap<String, Object> activityData =
         await _channel.invokeMethod("showActivity", values);
     return activityData;
   }
@@ -124,7 +142,7 @@ class FlutterUpshotPlugin {
       getBadges() async {
     HashMap<String, List<HashMap<String, Object>>>? badges =
         await _channel.invokeMethod("getBadges");
-    print(badges);
+    log(badges.toString());
     return badges;
   }
 }
