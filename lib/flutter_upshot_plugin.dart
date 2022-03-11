@@ -70,7 +70,7 @@ class FlutterUpshotPlugin {
     return;
   }
 
-  static Future<void> dispatchEventWithTime(double? time) async {
+  static Future<void> dispatchEventWithTime(int time) async {
     Map<String, dynamic> values = <String, dynamic>{};
     values.putIfAbsent("time", () => time);
     await _channel.invokeMethod("dispatchEventWithTime", values);

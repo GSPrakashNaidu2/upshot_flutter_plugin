@@ -104,7 +104,7 @@ class _MyAppState extends State<MyApp> {
     await FlutterUpshotPlugin.closeEventForId(eventId);
   }
 
-  static Future<void> dispatchEventWithTime(double time) async {
+  static Future<void> dispatchEventWithTime(int time) async {
     await FlutterUpshotPlugin.dispatchEventWithTime(time);
   }
 

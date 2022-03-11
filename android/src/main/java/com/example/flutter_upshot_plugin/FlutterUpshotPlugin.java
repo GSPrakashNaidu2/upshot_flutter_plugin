@@ -252,7 +252,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       //         Pass the time how much time want to dispatch
 //        Dispatch interval Min time value: 10 secs
 //        Dispatch interval Max time value: 120 secs
-      long time = call.argument("time");
+      int time = call.argument("time");
       BrandKinesis.getBKInstance().setDispatchEventTime(time);
     }
     /**
@@ -289,7 +289,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       }
     }
     /**
-     *...................................... createPageViewEvent .......................................
+     *...................................... createAttributionEvent .......................................
      */
     else if(call.method.equals("createAttributionEvent")) {
           String bkAttributionSource = call.argument("attributionSource");
