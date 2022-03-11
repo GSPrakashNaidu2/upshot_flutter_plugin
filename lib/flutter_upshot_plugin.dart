@@ -106,7 +106,7 @@ class FlutterUpshotPlugin {
     values.putIfAbsent("utmSource", () => utmSource);
     values.putIfAbsent("utmMedium", () => utmMedium);
     values.putIfAbsent("utmCampaign", () => utmCampaign);
-    await _channel.invokeMethod("createPageViewEvent", values);
+    await _channel.invokeMethod("createAttributionEvent", values);
     return;
   }
 
@@ -135,14 +135,18 @@ class FlutterUpshotPlugin {
     values.putIfAbsent("tag", () => tag);
     HashMap<String, Object> activityData =
         await _channel.invokeMethod("showActivity", values);
+    log(activityData.toString());
     return activityData;
   }
 
   static Future<HashMap<String, List<HashMap<String, Object>>>?>
       getBadges() async {
-    HashMap<String, List<HashMap<String, Object>>>? badges =
-        await _channel.invokeMethod("getBadges");
-    log(badges.toString());
-    return badges;
+    var badges;
+    try {
+      badges = await _channel.invokeMethod("getBadges");
+      log("badges.toString()");
+      log(badges.toString());
+      return badges;
+    } catch (e) {}
   }
 }

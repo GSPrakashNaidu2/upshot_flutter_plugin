@@ -358,7 +358,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
       bkInstance.getBadges(new BKBadgeAccessListener() {
         @Override
         public void onBadgesAvailable(HashMap<String, List<HashMap<String, Object>>> hashMap) {
-          result.success(hashMap);
+          Objects.requireNonNull(result).success(hashMap);
         }
       });
     }
@@ -368,7 +368,6 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
     else if(call.method.equals("showActivity")){
       BrandKinesis bkInstance = BrandKinesis.getBKInstance();
       String tag = call.argument("tag");
-      Log.e("Argument","Tag is" + tag);
       bkInstance.getActivity(context, BKActivityTypes.ACTIVITY_ANY, tag, new BKActivityCallback() {
         @Override
         public void onActivityError(int i) {
@@ -391,8 +390,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
             showActivityData.putIfAbsent("activityType",bkActivityTypes);
             showActivityData.putIfAbsent("actionData",map);
           }
-          result.success(showActivityData);
-          Log.e("Activity Data","Activity Data" + showActivityData.values().toString());
+          Objects.requireNonNull(result).success(showActivityData);
         }
       });
 
