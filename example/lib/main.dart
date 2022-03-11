@@ -170,11 +170,7 @@ class _MyAppState extends State<MyApp> {
                     textStyle: const TextStyle(color: Colors.white)),
                 onPressed: () {
                   initializeBrandKinesisWithOptions(
-                      "59977058-0b1b-4af5-b5cb-441680b74c26",
-                      "f3bf1d6f-5771-41f7-a6ff-640d3af4805e",
-                      true,
-                      true,
-                      true);
+                      "appId", "ownerId", true, true, true);
                 },
                 child: const Text("Initialize With Options"),
               ),
