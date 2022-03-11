@@ -220,7 +220,7 @@ class _MyAppState extends State<MyApp> {
                   data.putIfAbsent("first_name", () => "G S Prakash");
                   data.putIfAbsent("age", () => 23);
                   data.putIfAbsent("gender", () => 1);
-                  data.putIfAbsent("mail", () => "gsp8722@gmail.com");
+                  data.putIfAbsent("mail", () => "gsp8672@gmail.com");
                   data.putIfAbsent("day", () => 23);
                   data.putIfAbsent("month", () => 3);
                   data.putIfAbsent("year", () => 1996);
