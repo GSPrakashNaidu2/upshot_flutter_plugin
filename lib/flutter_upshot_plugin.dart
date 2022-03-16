@@ -9,7 +9,7 @@ class FlutterUpshotPlugin {
 
   /// The method which will return the platform version of the device
   static Future<String?> get platformVersion async {
-    final String? version = await _channel.invokeMethod('getPlatformVersion');
+    final String? version = await _channel.invokeMethod('getSDKVersion');
     return version;
   }
 
@@ -17,7 +17,7 @@ class FlutterUpshotPlugin {
   /// Automatically initialize the SDK in main.dart : initMethod
   /// This method will initialize the BrandKineses without any Options like AppId, OwnerId, etc,.
   static Future<void> initialiseBrandKinesis() async {
-    await _channel.invokeMethod("initialiseBrandKinesis");
+    await _channel.invokeMethod("initializeUsingConfigFile");
     return;
   }
 
@@ -36,7 +36,7 @@ class FlutterUpshotPlugin {
     values.putIfAbsent("fetchLocation", () => fetchLocation);
     values.putIfAbsent("useExternalStorage", () => useExternalStorage);
     values.putIfAbsent("enableDebugLogs", () => enableDebugLogs);
-    await _channel.invokeMethod("initialiseBrandKinesisWithOptions", values);
+    await _channel.invokeMethod("initializeUsingOptions", values);
     return;
   }
 
@@ -103,7 +103,7 @@ class FlutterUpshotPlugin {
 
   /// To terminate Upshot
   static Future<void> terminateUpshot() async {
-    await _channel.invokeMethod("terminateUpshot");
+    await _channel.invokeMethod("terminate");
     return;
   }
 

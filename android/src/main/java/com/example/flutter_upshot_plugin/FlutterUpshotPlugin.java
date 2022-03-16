@@ -146,13 +146,13 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
 
-    if(call.method.equals("getPlatformVersion")) {
+    if(call.method.equals("getSDKVersion")) {
       result.success("Android " + android.os.Build.VERSION.RELEASE);
     }
     /**
      *................................. initialiseBrandKinesis ..........................
      *  */
-    else if(call.method.equals("initialiseBrandKinesis")){
+    else if(call.method.equals("initializeUsingConfigFile")){
       setUpshotGlobalCallback();
       BrandKinesis.initialiseBrandKinesis(context, null);
 
@@ -162,7 +162,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
     /**
      *................................. initialiseBrandKinesisWithOptions ..........................
      */
-    else if(call.method.equals("initialiseBrandKinesisWithOptions")){
+    else if(call.method.equals("initializeUsingOptions")){
       setUpshotGlobalCallback();
       HashMap<String , Object> data = call.argument("data");
       String appId = call.argument("appId");
@@ -266,7 +266,7 @@ public class FlutterUpshotPlugin implements FlutterPlugin, MethodCallHandler {
     /**
      *...................................... terminateUpshot .......................................
      */
-    else if(call.method.equals("terminateUpshot")) {
+    else if(call.method.equals("terminate")) {
       BrandKinesis bk = BrandKinesis.getBKInstance();
       bk.terminate(context);
     }
